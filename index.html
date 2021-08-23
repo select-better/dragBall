@@ -25,11 +25,36 @@
 <body>
     <div class="ball"></div>
     <script>
+         // 订阅和发布 ，当订阅的时候，就像我们点了预约疫苗，当有资源的时候,让我们去打疫苗
+         class Subscribe{
+            constructor(){
+                this.collections = new Set()
+            }
+
+            add ( fn ){
+                if( fn ){
+                    this.collections.add(fn)
+                }
+            }
+            delete( fn ){
+                const collections = this.collections
+                if(collections.has(fn)){
+                    collections.delete( fn )
+                }
+            }
+            fire(...args){
+                this.collections.forEach(item=>item(...args))
+            }
+        }
+
         class Drag{
             constructor(el){
                 this.el = el;
                 ['hozTimer', 'verticalTimer', 'curL','curT' ,'elL', 'elT', 'mouseL', 'mouseT', 'speedX', 'speedY'].forEach(item=>  this[item] = null );
                 this.el.addEventListener('mousedown', this.onMouseDown.bind(this))
+                this.mouseDownSub = new Subscribe()
+                this.mouseMoveSub = new Subscribe()
+                this.mouseUpSub = new Subscribe()
             }
 
             onMouseDown(ev){
@@ -40,53 +65,38 @@
 
                 this.mouseL = ev.clientX;
                 this.mouseT = ev.clientY;
-                
+                this.mouseDownSub.fire();
                 // 将事件绑定上
-                this.mousemove = this.onMouseMove.bind(this)
-                this.mouseUp = this.onMouseUp.bind(this)
-                document.addEventListener('mousemove', this.mousemove)
-                document.addEventListener('mouseup', this.mouseUp)
-                // 将上一次的记录给去掉
-                if(this.hozTimer){
-                    clearInterval(this.hozTimer)
-                }
-                if(this.verticalTimer){
-                    clearInterval(this.verticalTimer)
-                }
-                // 两次的数据
-                this.speedX = undefined;
-                this.speedY =undefined;
-                this.isBegin = false
+                // this.mousemove = this.onMouseMove.bind(this)
+                // this.mouseUp = this.onMouseUp.bind(this)
+                // document.addEventListener('mousemove', this.mousemove)
+                // document.addEventListener('mouseup', this.mouseUp)
+                // // 将上一次的记录给去掉
+                // if(this.hozTimer){
+                //     clearInterval(this.hozTimer)
+                // }
+                // if(this.verticalTimer){
+                //     clearInterval(this.verticalTimer)
+                // }
+                // // 两次的数据
+                // this.speedX = undefined;
+                // this.speedY =undefined;
+                // this.isBegin = false
             }
 
             onMouseMove(ev){
-                const el = this.el
-                this.currentL = ev.clientX - this.mouseL + this.elL;
-                this.currentT = ev.clientY - this.mouseT + this.elT;
-                el.style.cssText = `left:${this.currentL}px; top:${this.currentT}px;`;
-                
-                if( !this.isBegin ){
-                    this.lastL =  this.currentL;
-                    this.lastT =  this.currentT;
-                    this.speedX = 0;
-                    this.speedY = 0;
-                    this.isBegin = true
-                    return;
-                }
-
-                this.speedX = this.currentL -  this.lastL;
-                this.speedY = this.currentT -  this.lastT;
-                this.lastL =  this.currentL;
-                this.lastT =  this.currentT;
+                this.mouseMoveSub.fire(ev);
             }
 
-            onMouseUp(ev){
+            onMouseUp(){
+                // this.mouseUpSub.fire(ev);
                 document.removeEventListener('mousemove', this.mousemove)
                 document.removeEventListener('mouseup', this.mouseUp)
                 this.isBegin = false
+                this.mouseUpSub.fire();
                 // 触发计算时间
-                this.onHoz.call(this)
-                this.onVertical.call(this)
+                // this.onHoz.call(this)
+                // this.onVertical.call(this)
             }
 
             onHoz(){
@@ -143,7 +153,137 @@
             }
         }
         const dom = document.querySelector('.ball')
-        new Drag(dom)
+
+        // const sub = new Subscribe()
+        // const f1 = () => {
+        //     console.log(1)
+        // }
+        // const f2 = () => {
+        //     console.log(2)
+        // }
+        // const f3 = () => {
+        //     console.log(3)
+        //     sub.delete(f1)
+        //     sub.delete(f2)
+        // }
+        // const f4 = (...args) => {
+        //     console.log(4, ...args)
+        // }
+
+        // sub.add(f1);
+        // sub.add(f2);
+        // sub.add(f3);
+        // sub.add(f4);
+        // let time = 4
+        // let timer = setInterval(() => {
+        //     time++
+        //    if(time>=8){
+        //       clearInterval(timer)
+        //    }else{
+        //     sub.fire(time)
+        //    }
+        // },20)
+        const drag = new Drag(dom)
+
+        function getSub(drag){
+            let mouseDown = () => {
+                drag.mousemove = drag.onMouseMove.bind(drag)
+                drag.mouseUp = drag.onMouseUp.bind(drag)
+                document.addEventListener('mousemove', drag.mousemove)
+                document.addEventListener('mouseup', drag.mouseUp)
+                // 将上一次的记录给去掉
+                if(drag.hozTimer){
+                    clearInterval(drag.hozTimer)
+                }
+                if(drag.verticalTimer){
+                    clearInterval(drag.verticalTimer)
+                }
+                // 两次的数据
+                drag.speedX = undefined;
+                drag.speedY =undefined;
+                drag.isBegin = false
+                console.log('down')
+            }
+
+            let mouseMove = (ev) => {
+                const el = drag.el
+                drag.currentL = ev.clientX - drag.mouseL + drag.elL;
+                drag.currentT = ev.clientY - drag.mouseT + drag.elT;
+                el.style.cssText = `left:${drag.currentL}px; top:${drag.currentT}px;`;
+                console.log(drag.currentL)
+                if( !drag.isBegin ){
+                    drag.lastL =  drag.currentL;
+                    drag.lastT =  drag.currentT;
+                    drag.speedX = 0;
+                    drag.speedY = 0;
+                    drag.isBegin = true
+                    return;
+                }
+
+                drag.speedX = drag.currentL -  drag.lastL;
+                drag.speedY = drag.currentT -  drag.lastT;
+                drag.lastL =  drag.currentL;
+                drag.lastT =  drag.currentT;
+            }
+            let onHoz = () => {
+                const el = drag.el;
+                if(drag.hozTimer){
+                    clearInterval(drag.hozTimer)
+                }
+                const min = 0,maxL = document.documentElement.clientWidth - el.offsetWidth;
+                let moveX = el.offsetLeft;
+                let speedX = drag.speedX;
+                drag.hozTimer = setInterval(()=>{
+                    speedX *=0.98;
+                    Math.abs(speedX)<=0.1?clearInterval(drag.hozTimer):null;
+                    moveX += speedX;
+                    if(moveX<=0){
+                        moveX = 0;
+                        speedX *= -1;
+                    }
+
+                    if(moveX >= maxL){
+                        moveX = maxL;
+                        speedX *= -1;
+                    }
+                    el.style.left = `${moveX}px`
+                }, 20)
+            }
+            let onVertical = () => {
+                const el = drag.el;
+                if(drag.verticalTimer){
+                    clearInterval(drag.verticalTimer)
+                }
+                const min = 0,maxT = document.documentElement.clientHeight - el.offsetHeight;
+                let moveT = el.offsetTop;
+                let speedY = 9.8;
+                let lastMoveT = null
+                drag.verticalTimer = setInterval(()=>{
+                    speedY += 10;
+                    speedY *= .98;
+                    // 当速度很小或者无限接近 1/2 并且在底部，就应该清楚按钮
+                    ((Math.abs(speedY - 4.9) <= 0.1 || Math.abs(speedY)<=0.1) && moveT >= maxT )?clearInterval(drag.verticalTimer):null;
+                    moveT += speedY;
+                    lastMoveT = moveT;
+
+                    if(moveT<=0){
+                        moveT = 0;
+                        speedY = speedY * (-1)  ;
+                    }
+
+                    if(moveT >= maxT){
+                        moveT = maxT;
+                        speedY *= -1;
+                    }
+                    el.style.top = `${moveT}px`
+                }, 20)
+            }
+            drag.mouseDownSub.add(mouseDown)
+            drag.mouseMoveSub.add(mouseMove)
+            drag.mouseUpSub.add(onHoz)
+            drag.mouseUpSub.add(onVertical)
+        }
+        getSub(drag)
     </script>
 </body>
 </html>
