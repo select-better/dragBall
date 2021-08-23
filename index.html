@@ -147,7 +147,6 @@
                         moveT = maxT;
                         speedY *= -1;
                     }
-                    console.log(speedY, moveT)
                     el.style.top = `${moveT}px`
                 }, 20)
             }
@@ -202,7 +201,6 @@
                 drag.speedX = undefined;
                 drag.speedY =undefined;
                 drag.isBegin = false
-                console.log('down')
             }
 
             let mouseMove = (ev) => {
@@ -210,7 +208,6 @@
                 drag.currentL = ev.clientX - drag.mouseL + drag.elL;
                 drag.currentT = ev.clientY - drag.mouseT + drag.elT;
                 el.style.cssText = `left:${drag.currentL}px; top:${drag.currentT}px;`;
-                console.log(drag.currentL)
                 if( !drag.isBegin ){
                     drag.lastL =  drag.currentL;
                     drag.lastT =  drag.currentT;
